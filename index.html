@@ -94,118 +94,113 @@ All of the following sections are optional, you can have a bookmarklet that just
     <a id="bookmarkletLink" class="bookmarklet-link" href="#" target="_blank">🔖 Drag Me to Bookmarks!</a>
   </div>
 
-<details>
-  <summary>🔍 Show Code Explanation (Click to expand)</summary>
-  <pre><code>
-// Bookmarklet starts as an IIFE (Immediately Invoked Function Expression)
+  <details>
+    <summary>🔍 Show Code Explanation (Click to expand)</summary>
+    <pre><code>
+// Bookmarklet only updates fields that have values
 (function(){
-  // Helper function to safely set input values for React/Chakra-controlled components
   function setReactInputValue(el, value) {
-    const lastValue = el.value;     // Save old value
-    el.focus();                     // Focus the input
-    el.value = value;               // Set new value
+    const lastValue = el.value;
+    el.focus();
+    el.value = value;
     const tracker = el._valueTracker;
-    if (tracker) tracker.setValue(lastValue);  // Update React's internal tracker
-    el.dispatchEvent(new Event("input", { bubbles: true })); // Fire React-friendly input event
-    el.blur();                      // Blur to finalize the update
+    if (tracker) tracker.setValue(lastValue);
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.blur();
   }
 
-  // Set the prompt text (injected into .css-15dwgqn)
-  const p = "<<< YOUR CUSTOM PROMPT GOES HERE >>>";
-
-  // Configuration for other input fields, keyed by their placeholder text
+  const p = "<<< YOUR CUSTOM PROMPT >>>";
   const c = {
-    "model": "<<< MODEL VALUE >>>",
+    "model": "<<< MODEL IF PROVIDED >>>",
     "https://url.com/v1": "<<< PROXY URL >>>",
     "Some reverse proxy key, do not put OpenAI API key here": "<<< PROXY KEY >>>"
   };
 
-  // Track how many changes were successfully made
   let changes = 0;
 
-  // Try to update the system prompt field
-  const t = document.querySelector(".css-15dwgqn textarea, .css-15dwgqn");
-  if (t) {
-    setReactInputValue(t, p);
-    changes++;
+  if (p.trim()) {
+    const t = document.querySelector(".css-15dwgqn textarea, .css-15dwgqn");
+    if (t) {
+      setReactInputValue(t, p);
+      changes++;
+    }
   }
 
-  // Loop through Chakra UI inputs and update values based on placeholder
-  document.querySelectorAll(".chakra-input").forEach(input => {
-    const placeholder = input.getAttribute("placeholder");
-    if (c[placeholder]) {
-      setReactInputValue(input, c[placeholder]);
+  document.querySelectorAll(".chakra-input").forEach(i => {
+    const h = i.getAttribute("placeholder");
+    if (c[h] && c[h].trim()) {
+      setReactInputValue(i, c[h]);
       changes++;
     }
   });
 
-  // Notify user if updates were made or not
   if (changes > 0) {
     alert("✅ Prompt and config fields injected successfully.");
   } else {
-    alert("⚠️ No matching fields found on the page.");
+    alert("⚠️ No changes made — all fields were left blank.");
   }
 })();
-  </code></pre>
-</details>
+    </code></pre>
+  </details>
 
+  <script>
+    function escapeJS(str) {
+      return str
+        .replace(/\\/g, "\\\\")
+        .replace(/`/g, "\\`")
+        .replace(/\$/g, "\\$")
+        .replace(/\n/g, "\\n");
+    }
 
-<script>
-  function escapeJS(str) {
-    return str
-      .replace(/\\/g, "\\\\")
-      .replace(/`/g, "\\`")
-      .replace(/\$/g, "\\$")
-      .replace(/\n/g, "\\n");
-  }
+    function generateBookmarklet() {
+      const promptRaw = document.getElementById("prompt").value.trim();
+      const model = document.getElementById("model").value.trim();
+      const proxyUrl = document.getElementById("proxyUrl").value.trim();
+      const proxyKey = document.getElementById("proxyKey").value.trim();
 
-  function generateBookmarklet() {
-    const prompt = escapeJS(document.getElementById("prompt").value.trim());
-    const model = document.getElementById("model").value.trim();
-    const proxyUrl = document.getElementById("proxyUrl").value.trim();
-    const proxyKey = document.getElementById("proxyKey").value.trim();
+      const prompt = escapeJS(promptRaw);
+      let config = {};
+      if (model) config["model"] = model;
+      if (proxyUrl) config["https://url.com/v1"] = proxyUrl;
+      if (proxyKey) config["Some reverse proxy key, do not put OpenAI API key here"] = proxyKey;
 
-    const bookmarklet = `javascript:(function(){
-      function setReactInputValue(el,v){
-        const l=el.value;
-        el.focus();
-        el.value=v;
-        const t=el._valueTracker;
-        if(t)t.setValue(l);
-        el.dispatchEvent(new Event("input",{bubbles:!0}));
-        el.blur();
-      }
-      const p=\`${prompt}\`;
-      const c={
-        "model":"${model}",
-        "https://url.com/v1":"${proxyUrl}",
-        "Some reverse proxy key, do not put OpenAI API key here":"${proxyKey}"
-      };
-      let changes=0;
-      const t=document.querySelector(".css-15dwgqn textarea, .css-15dwgqn");
-      if(t){
-        setReactInputValue(t,p);
-        changes++;
-      }
-      document.querySelectorAll(".chakra-input").forEach(i=>{
-        const h=i.getAttribute("placeholder");
-        if(c[h]){
-          setReactInputValue(i,c[h]);
-          changes++;
+      const configStr = JSON.stringify(config).replace(/"/g, '\\"');
+
+      const bookmarklet = `javascript:(function(){
+        function setReactInputValue(el,v){
+          const l=el.value;
+          el.focus();
+          el.value=v;
+          const t=el._valueTracker;
+          if(t)t.setValue(l);
+          el.dispatchEvent(new Event("input",{bubbles:!0}));
+          el.blur();
         }
-      });
-      if(changes>0){
-        alert("✅ Prompt and config fields injected successfully.");
-      }else{
-        alert("⚠️ No matching fields found on the page.");
-      }
-    })();`;
+        const p=\`${prompt}\`;
+        const c=${JSON.stringify(config)};
+        let changes=0;
+        if(p.trim()){
+          const t=document.querySelector(".css-15dwgqn textarea, .css-15dwgqn");
+          if(t){setReactInputValue(t,p);changes++;}
+        }
+        document.querySelectorAll(".chakra-input").forEach(i=>{
+          const h=i.getAttribute("placeholder");
+          if(c[h]&&c[h].trim()){
+            setReactInputValue(i,c[h]);
+            changes++;
+          }
+        });
+        if(changes>0){
+          alert("✅ Prompt and config fields injected successfully.");
+        }else{
+          alert("⚠️ No changes made — all fields were left blank.");
+        }
+      })();`;
 
-    document.getElementById("bookmarkletCode").textContent = bookmarklet;
-    document.getElementById("bookmarkletLink").href = bookmarklet;
-    document.getElementById("outputContainer").style.display = "block";
-  }
-</script>
-
+      document.getElementById("bookmarkletCode").textContent = bookmarklet;
+      document.getElementById("bookmarkletLink").href = bookmarklet;
+      document.getElementById("outputContainer").style.display = "block";
+    }
+  </script>
 </body>
 </html>
