@@ -59,8 +59,6 @@
   </style>
 </head>
 <body>
-
-
   <h1 style="color: red;">DISCLAIMER</h1>
   <p style="color: red;">
     NOTE: BOOKMARKLETS CAN BE USED TO STEAL YOUR DATA. DO NOT TRUST RANDOM BOOKMARKLETS.
@@ -82,19 +80,17 @@
     Simply drag your bookmarklet to your bookmark bar, give it a name, and click on it WHEN THE PROXY SETTINGS ARE OPEN and it should update.
   </p>
 
-
   <label for="prompt">System Prompt</label>
   <textarea id="prompt" placeholder="Paste your system prompt here..." rows="12"></textarea>
 
   <label for="model">Model Name (optional, for if you're switching between models/providers)</label>
-  <input id="model" placeholder="e.g. deepseek-ai/DeepSeek-V3-0324" />
+  <input id="model" placeholder="model" />
 
   <label for="proxyUrl">Proxy URL (Optional, for if you want to switch between models/providers)</label>
-  <input id="proxyUrl" placeholder="e.g. https://llm.chutes.ai/v1/chat/completions" />
+  <input id="proxyUrl" placeholder="https://url.com/v1" />
 
-  <label for="proxyKey">Proxy Key (If you're switching from one service to another, there's nothing malicious about this code but read the disclaimer and be careful when entering your API key somewhere.)
-</label>
-  <input id="proxyKey" placeholder="Paste proxy key here" />
+  <label for="proxyKey">Proxy Key (If you're switching from one service to another, there's nothing malicious about this code but read the disclaimer and be careful when entering your API key somewhere.)</label>
+  <input id="proxyKey" placeholder="Some reverse proxy key, do not put OpenAI API key here" />
 
   <button onclick="generateBookmarklet()">Generate Bookmarklet</button>
 
@@ -106,8 +102,7 @@
 
   <details>
     <summary>🔍 Show Code Explanation (Click to expand)</summary>
-    <pre><code>
-// Updated logic avoids fragile Chakra classnames and uses fallbacks
+    <pre><code>// Updated logic for new Janitor AI input structure
 (function(){
   function setReactInputValue(el, value) {
     const lastValue = el.value;
@@ -128,18 +123,13 @@
 
   let changes = 0;
 
-  if (p.trim()) {
-    const t = document.querySelector("textarea[id='open_ai_jailbreak_prompt']") ||
-              document.querySelector("label[for='open_ai_jailbreak_prompt']")?.parentElement?.querySelector("textarea") ||
-              document.querySelector("textarea[placeholder*='prompt']") ||
-              document.querySelector("textarea");
-    if (t) {
-      setReactInputValue(t, p);
-      changes++;
-    }
+  const t = document.getElementById("custom-prompt");
+  if (p.trim() && t) {
+    setReactInputValue(t, p);
+    changes++;
   }
 
-  document.querySelectorAll(".chakra-input").forEach(i => {
+  document.querySelectorAll("input[type='text']").forEach(i => {
     const h = i.getAttribute("placeholder");
     if (c[h] && c[h].trim()) {
       setReactInputValue(i, c[h]);
@@ -153,7 +143,7 @@
     alert("⚠️ No changes made — all fields were left blank.");
   }
 })();
-    </code></pre>
+</code></pre>
   </details>
 
   <script>
@@ -190,15 +180,12 @@
         const p=\`${prompt}\`;
         const c=${JSON.stringify(config)};
         let changes=0;
-        const t=document.querySelector("textarea[id='open_ai_jailbreak_prompt']")||
-                document.querySelector("label[for='open_ai_jailbreak_prompt']")?.parentElement?.querySelector("textarea")||
-                document.querySelector("textarea[placeholder*='prompt']")||
-                document.querySelector("textarea");
-        if(p.trim() && t){
+        const t=document.getElementById("custom-prompt");
+        if(p.trim()&&t){
           setReactInputValue(t,p);
           changes++;
         }
-        document.querySelectorAll(".chakra-input").forEach(i=>{
+        document.querySelectorAll("input[type='text']").forEach(i=>{
           const h=i.getAttribute("placeholder");
           if(c[h]&&c[h].trim()){
             setReactInputValue(i,c[h]);
